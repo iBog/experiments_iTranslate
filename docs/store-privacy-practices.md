@@ -45,6 +45,26 @@ data-usage certification checkbox and **Save Draft**.
 > user-configured server; it makes no other network requests and sends no data
 > to the developer or third parties.
 
+### activeTab
+
+_Only requested while the console still holds a package ≤ 1.0.0 — the
+permission was removed in 1.0.1. Re-upload the new zip and this field
+disappears; otherwise use:_
+
+> Used only to communicate with the page where the user invoked the
+> right-click "llmTranslate" menu, so the translation popup can be shown on
+> that page at the cursor position. No page content is read beyond the text
+> the user explicitly selected for translation.
+
+### scripting
+
+_Same as activeTab — removed in 1.0.1, re-upload and this field disappears;
+otherwise use:_
+
+> Used only to display the translation result popup on the page where the
+> user selected text and invoked translation via the context menu. No scripts
+> are injected for any other purpose; no page data is collected.
+
 ### Remote code use
 
 Select **"No, I am not using remote code"**.
