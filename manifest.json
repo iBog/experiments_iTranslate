@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "llmTranslate — Ollama Translator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Translate selected text on any site with a local Ollama LLM. Select text, right-click, choose llmTranslate.",
   "permissions": [
     "contextMenus",
