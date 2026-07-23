@@ -37,7 +37,7 @@
     switch (msg?.type) {
       case 'itranslate-loading':
         startedAt = Date.now();
-        showPopup(renderLoading(msg));
+        showPopup(() => renderLoading(msg));
         startTimer();
         break;
       case 'itranslate-status':
@@ -59,14 +59,17 @@
         break;
       case 'itranslate-error':
         stopTimer();
-        showPopup(renderError(msg.error));
+        showPopup(() => renderError(msg.error));
         break;
     }
   });
 
   // ---------------------------------------------------------------- popup
 
-  function showPopup(contentEl) {
+  // Takes a builder function so content is created AFTER removePopup()
+  // has cleared the previous popup's element references — building the
+  // content first would let removePopup() null the fresh refs.
+  function showPopup(build) {
     removePopup();
 
     host = document.createElement('div');
@@ -78,6 +81,7 @@
     host.style.left = '0';
     host.style.top = '0';
 
+    const contentEl = build();
     shadow = host.attachShadow({ mode: 'closed' });
     shadow.appendChild(styleEl());
     shadow.appendChild(contentEl);
@@ -157,7 +161,7 @@
   // Switch the loading popup into the streaming-result view (once).
   function ensureStreamView(msg) {
     if (streamTextEl) return;
-    showPopup(renderStream(msg));
+    showPopup(() => renderStream(msg));
     startTimer();
   }
 
@@ -200,7 +204,7 @@
 
     const foot = el('div', 'itr-foot');
     streamStateEl = el('span', 'itr-model itr-live', `Translating to ${msg.targetLang}…`);
-    elapsedEl = el('span', 'itr-elapsed', elapsedEl ? elapsedEl.textContent : '0s');
+    elapsedEl = el('span', 'itr-elapsed', `${Math.round((Date.now() - startedAt) / 1000)}s`);
     streamCopyBtn = el('button', 'itr-copy', 'Copy');
     streamCopyBtn.disabled = true; // enabled when the stream finishes
     streamCopyBtn.addEventListener('click', async () => {
