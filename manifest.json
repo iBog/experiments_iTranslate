@@ -5,9 +5,7 @@
   "description": "Translate selected text on any site with a local Ollama LLM. Select text, right-click, choose llmTranslate.",
   "permissions": [
     "contextMenus",
-    "storage",
-    "activeTab",
-    "scripting"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
