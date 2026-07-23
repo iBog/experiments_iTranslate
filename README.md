@@ -55,6 +55,46 @@ Select text on any page → right-click → **iTranslate "…"** → the transla
 | `options.html/js/css` | Settings page |
 | `icons/` | Extension icons |
 
+## Releasing
+
+### Chrome Web Store (for regular users)
+
+Chrome blocks non-store `.crx` installs on Windows/macOS, so the Web Store is the only
+way to reach non-technical users.
+
+1. **Register** as a developer at the
+   [Chrome Web Store Developer Console](https://chrome.google.com/webstore/devconsole)
+   (one-time $5 fee).
+2. **Bump the version** in `manifest.json` (e.g. `1.0.1`) — the store rejects re-uploads
+   of the same version.
+3. **Build the package** — zip only the extension files (no `.git`, no README):
+   ```powershell
+   Compress-Archive -Force -Path manifest.json, background.js, content.js, options.html, options.js, options.css, icons -DestinationPath itranslate-1.0.0.zip
+   ```
+4. **Create the listing** in the dev console:
+   - Description — mention it requires a locally running [Ollama](https://ollama.com)
+   - At least one screenshot (1280×800 or 640×400) and a small promo tile (440×280)
+   - Category: Productivity / Tools
+5. **Privacy declarations:**
+   - Justify permissions: content script needs `<all_urls>` to show the popup on any
+     site; network requests go only to the user-configured local Ollama URL
+   - Data usage: the extension collects nothing — selected text is sent only to the
+     user's own local server
+   - Provide a privacy policy URL (a simple GitHub page stating "all processing is
+     local" is enough)
+6. **Submit for review.** Broad host permissions usually mean a manual review —
+   expect a few days up to ~2 weeks for the first submission. Publishing as
+   **Unlisted** first is a good soft launch.
+
+### GitHub release (for developers)
+
+Ollama users are technical — "Load unpacked" works fine for them:
+
+1. Tag and push: `git tag v1.0.0 && git push --tags`
+2. Create a GitHub release from the tag and attach the zip from step 3 above
+3. Users download, unzip, and install via `chrome://extensions` → Developer mode →
+   **Load unpacked** (see Setup above)
+
 ## Notes
 
 - Works on normal web pages; Chrome blocks content scripts on `chrome://` pages and the Web Store.
