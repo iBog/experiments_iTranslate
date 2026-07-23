@@ -1,4 +1,4 @@
-// iTranslate — background service worker
+// llmTranslate — background service worker
 // Creates the context menu, calls the local Ollama server, and sends the
 // result to the content script for display at the cursor position.
 //
@@ -8,7 +8,7 @@
 //  - The translation itself uses stream:true, so tokens are forwarded to
 //    the popup live as they are generated.
 
-const MENU_ID = 'itranslate-selection';
+const MENU_ID = 'llmtranslate-selection';
 
 const DEFAULTS = {
   ollamaUrl: 'http://localhost:11434',
@@ -20,7 +20,7 @@ const DEFAULTS = {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: MENU_ID,
-    title: 'iTranslate "%s"',
+    title: 'llmTranslate "%s"',
     contexts: ['selection']
   });
 });
@@ -47,8 +47,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       chrome.storage.sync.set({ model: only });
     } else {
       await sendToTab(tab.id, {
-        type: 'itranslate-error',
-        error: 'No model selected. Open the iTranslate settings page (extension icon) and choose a model.'
+        type: 'llmtranslate-error',
+        error: 'No model selected. Open the llmTranslate settings page (extension icon) and choose a model.'
       });
       return;
     }
@@ -56,7 +56,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
   // Show loading popup immediately at the cursor position.
   const delivered = await sendToTab(tab.id, {
-    type: 'itranslate-loading',
+    type: 'llmtranslate-loading',
     targetLang: settings.targetLang,
     model: settings.model
   });
@@ -70,7 +70,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     // Phase detection: is the model already resident in memory?
     const loaded = await isModelLoaded(base, settings.model);
     await sendToTab(tab.id, {
-      type: 'itranslate-status',
+      type: 'llmtranslate-status',
       phase: loaded ? 'translating' : 'loading-model',
       model: settings.model,
       targetLang: settings.targetLang
@@ -85,7 +85,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           clearInterval(pollTimer);
           if (!firstChunkSeen) {
             sendToTab(tab.id, {
-              type: 'itranslate-status',
+              type: 'llmtranslate-status',
               phase: 'starting',
               model: settings.model,
               targetLang: settings.targetLang
@@ -103,7 +103,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       if (!visible) {
         // Model is inside a <think> block — nothing displayable yet.
         sendToTab(tab.id, {
-          type: 'itranslate-status',
+          type: 'llmtranslate-status',
           phase: 'thinking',
           model: settings.model,
           targetLang: settings.targetLang
@@ -113,7 +113,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       if (now - lastSent < 80) return; // throttle UI updates
       lastSent = now;
       sendToTab(tab.id, {
-        type: 'itranslate-progress',
+        type: 'llmtranslate-progress',
         text: visible,
         targetLang: settings.targetLang,
         model: settings.model
@@ -123,7 +123,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const finalText = stripThinking(translated);
     if (!finalText) throw new Error('Ollama returned an empty response.');
     await sendToTab(tab.id, {
-      type: 'itranslate-result',
+      type: 'llmtranslate-result',
       original: text,
       translated: finalText,
       targetLang: settings.targetLang,
@@ -131,7 +131,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     });
   } catch (err) {
     await sendToTab(tab.id, {
-      type: 'itranslate-error',
+      type: 'llmtranslate-error',
       error: describeError(err, settings.ollamaUrl)
     });
   } finally {
@@ -257,7 +257,7 @@ function describeError(err, url) {
     );
   }
   if (err instanceof TypeError) {
-    return `Cannot reach Ollama at ${url}. Is Ollama running? Check the URL in the iTranslate settings.`;
+    return `Cannot reach Ollama at ${url}. Is Ollama running? Check the URL in the llmTranslate settings.`;
   }
   return err?.message || 'Unknown error while translating.';
 }

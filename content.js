@@ -1,13 +1,13 @@
-// iTranslate — content script
+// llmTranslate — content script
 // Tracks the cursor position of the last right-click and shows the
 // translation popup at that position, isolated inside a Shadow DOM.
 //
 // Message flow from background:
-//   itranslate-loading  → popup with spinner + elapsed timer
-//   itranslate-status   → phase label updates (loading model / processing / thinking)
-//   itranslate-progress → live streaming translation text
-//   itranslate-result   → final text (stops timer, enables Copy)
-//   itranslate-error    → error box
+//   llmtranslate-loading  → popup with spinner + elapsed timer
+//   llmtranslate-status   → phase label updates (loading model / processing / thinking)
+//   llmtranslate-progress → live streaming translation text
+//   llmtranslate-result   → final text (stops timer, enables Copy)
+//   llmtranslate-error    → error box
 
 (() => {
   'use strict';
@@ -35,15 +35,15 @@
 
   chrome.runtime.onMessage.addListener((msg) => {
     switch (msg?.type) {
-      case 'itranslate-loading':
+      case 'llmtranslate-loading':
         startedAt = Date.now();
         showPopup(() => renderLoading(msg));
         startTimer();
         break;
-      case 'itranslate-status':
+      case 'llmtranslate-status':
         updateStatus(msg);
         break;
-      case 'itranslate-progress':
+      case 'llmtranslate-progress':
         ensureStreamView(msg);
         currentText = msg.text;
         if (streamTextEl) {
@@ -51,13 +51,13 @@
           streamTextEl.scrollTop = streamTextEl.scrollHeight;
         }
         break;
-      case 'itranslate-result':
+      case 'llmtranslate-result':
         ensureStreamView(msg);
         currentText = msg.translated;
         if (streamTextEl) streamTextEl.textContent = msg.translated;
         finalize(msg);
         break;
-      case 'itranslate-error':
+      case 'llmtranslate-error':
         stopTimer();
         showPopup(() => renderError(msg.error));
         break;
@@ -73,7 +73,7 @@
     removePopup();
 
     host = document.createElement('div');
-    host.setAttribute('data-itranslate-popup', '');
+    host.setAttribute('data-llmtranslate-popup', '');
     // Keep the host inert relative to page styles.
     host.style.all = 'initial';
     host.style.position = 'fixed';
@@ -180,7 +180,7 @@
   function renderLoading(msg) {
     const box = el('div', 'itr-box');
     const head = el('div', 'itr-head');
-    head.append(el('span', 'itr-title', 'iTranslate'), closeBtn());
+    head.append(el('span', 'itr-title', 'llmTranslate'), closeBtn());
 
     const body = el('div', 'itr-body itr-loading');
     const spinner = el('span', 'itr-spinner');
@@ -196,7 +196,7 @@
     const box = el('div', 'itr-box');
 
     const head = el('div', 'itr-head');
-    head.append(el('span', 'itr-title', `iTranslate → ${msg.targetLang}`), closeBtn());
+    head.append(el('span', 'itr-title', `llmTranslate → ${msg.targetLang}`), closeBtn());
 
     const body = el('div', 'itr-body');
     streamTextEl = el('div', 'itr-text', '');
@@ -225,7 +225,7 @@
   function renderError(message) {
     const box = el('div', 'itr-box');
     const head = el('div', 'itr-head itr-head-error');
-    head.append(el('span', 'itr-title', 'iTranslate — error'), closeBtn());
+    head.append(el('span', 'itr-title', 'llmTranslate — error'), closeBtn());
     const body = el('div', 'itr-body');
     body.append(el('div', 'itr-text itr-error', message || 'Unknown error'));
     box.append(head, body);

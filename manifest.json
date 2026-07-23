@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "iTranslate — Ollama Translator",
+  "name": "llmTranslate — Ollama Translator",
   "version": "1.0.0",
-  "description": "Translate selected text on any site with a local Ollama LLM. Select text, right-click, choose iTranslate.",
+  "description": "Translate selected text on any site with a local Ollama LLM. Select text, right-click, choose llmTranslate.",
   "permissions": [
     "contextMenus",
     "storage",
@@ -25,7 +25,7 @@
   ],
   "options_page": "options.html",
   "action": {
-    "default_title": "iTranslate settings",
+    "default_title": "llmTranslate settings",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

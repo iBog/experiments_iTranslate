@@ -1,7 +1,7 @@
-# iTranslate — Ollama Translator (Chrome Extension)
+# llmTranslate — Ollama Translator (Chrome Extension)
 
 Translate selected text on any website with a **local Ollama LLM**.
-Select text → right-click → **iTranslate** → translation appears in a popup at your cursor.
+Select text → right-click → **llmTranslate** → translation appears in a popup at your cursor.
 
 ## Features
 
@@ -43,7 +43,7 @@ export OLLAMA_ORIGINS="chrome-extension://*"   # or launchctl setenv / systemd o
 
 ### 4. Use it
 
-Select text on any page → right-click → **iTranslate "…"** → the translation pops up at your cursor.
+Select text on any page → right-click → **llmTranslate "…"** → the translation pops up at your cursor.
 
 ## Files
 
@@ -69,7 +69,7 @@ way to reach non-technical users.
    of the same version.
 3. **Build the package** — zip only the extension files (no `.git`, no README):
    ```powershell
-   Compress-Archive -Force -Path manifest.json, background.js, content.js, options.html, options.js, options.css, icons -DestinationPath itranslate-1.0.0.zip
+   Compress-Archive -Force -Path manifest.json, background.js, content.js, options.html, options.js, options.css, icons -DestinationPath llmtranslate-1.0.0.zip
    ```
 4. **Create the listing** in the dev console:
    - Description — mention it requires a locally running [Ollama](https://ollama.com)

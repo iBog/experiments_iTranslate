@@ -1,4 +1,4 @@
-// iTranslate — settings page logic
+// llmTranslate — settings page logic
 
 const DEFAULT_URL = 'http://localhost:11434';
 
