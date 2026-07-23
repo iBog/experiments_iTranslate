@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>iTranslate — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="card">
+    <header>
+      <img src="icons/icon48.png" alt="" width="32" height="32">
+      <div>
+        <h1>iTranslate</h1>
+        <p class="sub">Translate selected text with a local Ollama LLM</p>
+      </div>
+    </header>
+
+    <section class="field">
+      <label for="ollamaUrl">Ollama connection URL</label>
+      <div class="row">
+        <input type="url" id="ollamaUrl" placeholder="http://localhost:11434" spellcheck="false">
+        <button id="connectBtn" type="button">Connect</button>
+      </div>
+      <p id="connStatus" class="status"></p>
+    </section>
+
+    <section class="field">
+      <label for="model">Model</label>
+      <select id="model" disabled>
+        <option value="">— connect to load models —</option>
+      </select>
+    </section>
+
+    <section class="field">
+      <label for="targetLang">Target language</label>
+      <select id="targetLang"></select>
+    </section>
+
+    <section class="field">
+      <label for="keepAlive">Keep model alive</label>
+      <select id="keepAlive"></select>
+      <p class="note">How long Ollama keeps the model in memory after a translation. Longer = no cold-start wait, but VRAM/RAM stays occupied.</p>
+    </section>
+
+    <footer>
+      <button id="saveBtn" type="button" class="primary" disabled>Save settings</button>
+      <span id="saveStatus" class="status"></span>
+    </footer>
+
+    <details class="hint">
+      <summary>Getting 403 Forbidden from Ollama?</summary>
+      <p>Ollama blocks requests from browser extensions by default. Allow them by setting the
+      <code>OLLAMA_ORIGINS</code> environment variable and restarting Ollama:</p>
+      <pre>Windows (then restart Ollama):
+setx OLLAMA_ORIGINS "chrome-extension://*"
+
+macOS / Linux:
+export OLLAMA_ORIGINS="chrome-extension://*"</pre>
+    </details>
+
+    <details class="hint">
+      <summary>How to install Ollama</summary>
+      <p>Ollama runs LLMs locally on your machine — no data leaves your computer.</p>
+      <ol>
+        <li>Download the installer from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> (Windows, macOS or Linux) and run it.</li>
+        <li>Open a terminal window:
+          <ul>
+            <li><strong>Windows:</strong> press <code>Win</code>, type <code>cmd</code>, press <code>Enter</code></li>
+            <li><strong>macOS:</strong> press <code>Cmd + Space</code>, type <code>Terminal</code>, press <code>Enter</code></li>
+          </ul>
+        </li>
+        <li>Copy the command below, paste it into the terminal and press <code>Enter</code>.
+        It downloads the translation model (a few GB — wait until it shows <code>success</code>):</li>
+      </ol>
+      <pre>ollama pull gemma4:e4b</pre>
+      <p>4. Verify it is running — open <code>http://localhost:11434</code> in the browser
+      (it should say "Ollama is running"), then click <strong>Connect</strong> above to load your models.</p>
+    </details>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>
