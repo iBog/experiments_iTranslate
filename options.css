@@ -132,6 +132,48 @@ footer {
 .status.error { color: var(--error); }
 .status.pending { color: var(--muted); }
 
+/* Actionable panel shown under the connection status when something is wrong. */
+.help {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.help[hidden] { display: none; }
+.help strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 6px; }
+.help ol { margin: 0; padding-left: 18px; }
+.help li { margin-bottom: 4px; }
+.help a { color: var(--accent); text-decoration: none; }
+.help a:hover { text-decoration: underline; }
+
+.cmd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 7px 8px 7px 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.cmd-row code {
+  flex: 1;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  color: var(--text);
+  overflow-x: auto;
+  white-space: nowrap;
+  user-select: all;
+}
+
+button.mini { padding: 4px 10px; font-size: 11.5px; }
+
 .hint {
   margin-top: 22px;
   padding-top: 14px;

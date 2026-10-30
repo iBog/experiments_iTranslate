@@ -3,9 +3,8 @@
 Copy-paste texts for the developer console. After filling these in, tick the
 data-usage certification checkbox and **Save Draft**.
 
-> Note: the `activeTab` and `scripting` justifications requested by the console
-> disappear after uploading a package built from the current `manifest.json` —
-> those permissions were removed as unused.
+> Note: `activeTab` was removed as unused in 1.0.1. `scripting` was removed in
+> 1.0.1 too and brought back in 1.0.2, where it is actually used (see below).
 
 ---
 
@@ -58,12 +57,14 @@ disappears; otherwise use:_
 
 ### scripting
 
-_Same as activeTab — removed in 1.0.1, re-upload and this field disappears;
-otherwise use:_
+_Requested again since 1.0.2:_
 
-> Used only to display the translation result popup on the page where the
-> user selected text and invoked translation via the context menu. No scripts
-> are injected for any other purpose; no page data is collected.
+> Used only when the user invokes the right-click "llmTranslate" menu on a tab
+> that was already open before the extension was installed or updated, so its
+> content script is missing. The extension then injects its own packaged
+> content.js (chrome.scripting.executeScript with files: ["content.js"]) into
+> that one tab to show the translation popup. No other scripts are injected,
+> no remote code is executed and no page data is collected.
 
 ### Remote code use
 

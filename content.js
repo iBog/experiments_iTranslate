@@ -25,6 +25,8 @@
   let currentText = '';
   let timerId = null;
   let startedAt = 0;
+  // Set when the user closes the popup; late messages of that run are dropped.
+  let dismissed = false;
 
   // Remember where the context menu was opened.
   document.addEventListener(
@@ -34,6 +36,9 @@
   );
 
   chrome.runtime.onMessage.addListener((msg) => {
+    if (msg?.type === 'llmtranslate-loading') dismissed = false;
+    else if (dismissed) return;
+
     switch (msg?.type) {
       case 'llmtranslate-loading':
         startedAt = Date.now();
@@ -59,7 +64,7 @@
         break;
       case 'llmtranslate-error':
         stopTimer();
-        showPopup(() => renderError(msg.error));
+        showPopup(() => renderError(msg));
         break;
     }
   });
@@ -120,12 +125,19 @@
     }
   }
 
+  // User closed the popup: stop the translation still running in Ollama.
+  function dismiss() {
+    removePopup();
+    dismissed = true;
+    send({ type: 'llmtranslate-cancel' });
+  }
+
   function onOutside(e) {
-    if (host && !e.composedPath().includes(host)) removePopup();
+    if (host && !e.composedPath().includes(host)) dismiss();
   }
 
   function onKey(e) {
-    if (e.key === 'Escape') removePopup();
+    if (e.key === 'Escape') dismiss();
   }
 
   // ---------------------------------------------------------------- timer
@@ -146,6 +158,7 @@
   // ------------------------------------------------------- phase handling
 
   const PHASE_LABELS = {
+    'connecting': (m) => `Connecting to Ollama…`,
     'loading-model': (m) => `Loading ${m.model} into memory… (first run can take a while)`,
     'starting': (m) => `Model loaded — processing prompt…`,
     'thinking': (m) => `Model is thinking…`,
@@ -184,7 +197,7 @@
 
     const body = el('div', 'itr-body itr-loading');
     const spinner = el('span', 'itr-spinner');
-    statusLabelEl = el('span', '', `Checking ${msg.model || 'model'}…`);
+    statusLabelEl = el('span', '', 'Connecting to Ollama…');
     elapsedEl = el('span', 'itr-elapsed', '0s');
     body.append(spinner, statusLabelEl, elapsedEl);
 
@@ -222,14 +235,115 @@
     return box;
   }
 
-  function renderError(message) {
-    const box = el('div', 'itr-box');
+  // Error popup. Beyond the message it can show:
+  //  - numbered fix steps
+  //  - a shell command with a Copy button (ollama pull …, setx OLLAMA_ORIGINS …)
+  //  - a picker of the models actually installed on the server
+  //  - Retry / Settings buttons
+  function renderError(msg) {
+    // Legacy shape: a bare string in msg.error.
+    const payload = typeof msg === 'string' ? { message: msg } : (msg || {});
+    const box = el('div', 'itr-box itr-box-error');
+
     const head = el('div', 'itr-head itr-head-error');
-    head.append(el('span', 'itr-title', 'llmTranslate — error'), closeBtn());
+    head.append(
+      el('span', 'itr-title', `llmTranslate — ${payload.title || 'error'}`),
+      closeBtn()
+    );
+
     const body = el('div', 'itr-body');
-    body.append(el('div', 'itr-text itr-error', message || 'Unknown error'));
-    box.append(head, body);
+    body.append(
+      el('div', 'itr-text itr-error', payload.message || payload.error || 'Unknown error')
+    );
+
+    if (Array.isArray(payload.steps) && payload.steps.length) {
+      const ol = el('ol', 'itr-steps');
+      for (const step of payload.steps) ol.append(el('li', '', step));
+      body.append(ol);
+    }
+
+    if (payload.command) body.append(commandBlock(payload.command));
+
+    if (payload.link) {
+      const a = el('a', 'itr-link', payload.link.replace(/^https?:\/\//, ''));
+      a.href = payload.link;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      body.append(a);
+    }
+
+    if (Array.isArray(payload.models) && payload.models.length) {
+      body.append(modelPicker(payload.models));
+    }
+
+    const foot = el('div', 'itr-foot itr-foot-actions');
+    const settingsBtn = el('button', 'itr-btn', 'Open settings');
+    settingsBtn.addEventListener('click', () => {
+      send({ type: 'llmtranslate-open-options' });
+      removePopup();
+    });
+    foot.append(settingsBtn);
+
+    if (payload.canRetry !== false) {
+      const retryBtn = el('button', 'itr-btn itr-btn-primary', 'Retry');
+      retryBtn.addEventListener('click', () => {
+        retryBtn.disabled = true;
+        send({ type: 'llmtranslate-retry' });
+      });
+      foot.append(retryBtn);
+    }
+
+    box.append(head, body, foot);
     return box;
+  }
+
+  // A copyable one-line shell command.
+  function commandBlock(command) {
+    const wrap = el('div', 'itr-cmd');
+    wrap.append(el('code', 'itr-cmd-text', command));
+    const btn = el('button', 'itr-btn itr-btn-mini', 'Copy');
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(command);
+        btn.textContent = 'Copied ✓';
+        setTimeout(() => (btn.textContent = 'Copy'), 1500);
+      } catch {
+        btn.textContent = 'Copy failed';
+      }
+    });
+    wrap.append(btn);
+    return wrap;
+  }
+
+  // Lets the user switch to a model that is actually installed, without
+  // leaving the page — the choice is saved and the translation re-runs.
+  function modelPicker(models) {
+    const wrap = el('div', 'itr-picker');
+    wrap.append(el('span', 'itr-picker-label', 'Installed models:'));
+
+    const select = el('select', 'itr-select');
+    for (const name of models) {
+      const opt = el('option', '', name);
+      opt.value = name;
+      select.append(opt);
+    }
+
+    const btn = el('button', 'itr-btn itr-btn-primary itr-btn-mini', 'Use & translate');
+    btn.addEventListener('click', () => {
+      btn.disabled = true;
+      send({ type: 'llmtranslate-use-model', model: select.value });
+    });
+
+    wrap.append(select, btn);
+    return wrap;
+  }
+
+  function send(message) {
+    try {
+      chrome.runtime.sendMessage(message);
+    } catch {
+      // Extension context invalidated (reloaded) — nothing to do.
+    }
   }
 
   // --------------------------------------------------------------- helpers
@@ -244,7 +358,7 @@
   function closeBtn() {
     const b = el('button', 'itr-close', '✕');
     b.title = 'Close (Esc)';
-    b.addEventListener('click', removePopup);
+    b.addEventListener('click', dismiss);
     return b;
   }
 
@@ -306,6 +420,52 @@
         cursor: text;
       }
       .itr-error { color: #cf222e; }
+      .itr-box-error { max-width: min(460px, calc(100vw - 32px)); }
+      .itr-steps {
+        margin: 10px 0 0; padding-left: 20px;
+        font-size: 12.5px; color: #57606a; line-height: 1.5;
+      }
+      .itr-steps li { margin-bottom: 3px; }
+      .itr-cmd {
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 10px; padding: 7px 8px 7px 10px;
+        background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 8px;
+      }
+      .itr-cmd-text {
+        font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+        font-size: 12px; color: #1f2328;
+        flex: 1; overflow-x: auto; white-space: nowrap;
+        user-select: text; cursor: text;
+      }
+      .itr-link {
+        display: inline-block; margin-top: 8px;
+        font-size: 12.5px; color: #0969da; text-decoration: none;
+      }
+      .itr-link:hover { text-decoration: underline; }
+      .itr-picker {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .itr-picker-label { font-size: 12px; color: #57606a; }
+      .itr-select {
+        all: unset;
+        font-family: inherit; font-size: 12.5px; color: #1f2328;
+        background: #ffffff; border: 1px solid #d0d7de; border-radius: 6px;
+        padding: 4px 6px; cursor: pointer; max-width: 200px;
+      }
+      .itr-btn {
+        all: unset; cursor: pointer;
+        font-family: inherit; font-size: 12.5px; font-weight: 600;
+        color: #1f2328; background: #f6f8fa;
+        border: 1px solid #d0d7de; border-radius: 6px;
+        padding: 5px 12px; white-space: nowrap;
+      }
+      .itr-btn:hover:not(:disabled) { border-color: #0969da; color: #0969da; }
+      .itr-btn:disabled { opacity: .5; cursor: default; }
+      .itr-btn-primary { background: #0969da; border-color: #0969da; color: #ffffff; }
+      .itr-btn-primary:hover:not(:disabled) { background: #0a5fc2; border-color: #0a5fc2; color: #ffffff; }
+      .itr-btn-mini { font-size: 11.5px; padding: 4px 9px; }
+      .itr-foot-actions { justify-content: flex-end; padding: 8px 12px 10px; }
       .itr-foot {
         display: flex; align-items: center; gap: 10px;
         padding: 6px 10px 8px 12px;
@@ -342,6 +502,16 @@
         .itr-live { color: #58a6ff; }
         .itr-copy { color: #58a6ff; }
         .itr-copy:hover:not(:disabled) { background: rgba(56,139,253,.15); }
+        .itr-steps { color: #8b949e; }
+        .itr-cmd { background: #0d1117; border-color: #30363d; }
+        .itr-cmd-text { color: #e6edf3; }
+        .itr-link { color: #58a6ff; }
+        .itr-picker-label { color: #8b949e; }
+        .itr-select { color: #e6edf3; background: #0d1117; border-color: #30363d; }
+        .itr-btn { color: #e6edf3; background: #21262d; border-color: #30363d; }
+        .itr-btn:hover:not(:disabled) { border-color: #58a6ff; color: #58a6ff; }
+        .itr-btn-primary { background: #1f6feb; border-color: #1f6feb; color: #ffffff; }
+        .itr-btn-primary:hover:not(:disabled) { background: #388bfd; border-color: #388bfd; color: #ffffff; }
       }
     `;
     return s;

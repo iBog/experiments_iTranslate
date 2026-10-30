@@ -22,6 +22,7 @@
         <button id="connectBtn" type="button">Connect</button>
       </div>
       <p id="connStatus" class="status"></p>
+      <div id="connHelp" class="help" hidden></div>
     </section>
 
     <section class="field">
@@ -29,6 +30,7 @@
       <select id="model" disabled>
         <option value="">— connect to load models —</option>
       </select>
+      <p id="modelStatus" class="status"></p>
     </section>
 
     <section class="field">
@@ -51,11 +53,7 @@
       <summary>Getting 403 Forbidden from Ollama?</summary>
       <p>Ollama blocks requests from browser extensions by default. Allow them by setting the
       <code>OLLAMA_ORIGINS</code> environment variable and restarting Ollama:</p>
-      <pre>Windows (then restart Ollama):
-setx OLLAMA_ORIGINS "chrome-extension://*"
-
-macOS / Linux:
-export OLLAMA_ORIGINS="chrome-extension://*"</pre>
+      <pre id="originsHint"></pre>
     </details>
 
     <details class="hint">
@@ -78,6 +76,7 @@ export OLLAMA_ORIGINS="chrome-extension://*"</pre>
     </details>
   </main>
 
+  <script src="ollama.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

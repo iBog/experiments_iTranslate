@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "llmTranslate — Ollama Translator",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Translate selected text on any site with a local Ollama LLM. Select text, right-click, choose llmTranslate.",
   "permissions": [
     "contextMenus",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -18,7 +19,7 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_idle",
-      "all_frames": false
+      "all_frames": true
     }
   ],
   "options_page": "options.html",

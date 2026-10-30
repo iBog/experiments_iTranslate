@@ -13,20 +13,47 @@ Select text → right-click → **llmTranslate** → translation appears in a po
   - Target language dropdown (top 41 languages)
 - Result popup at the cursor position, with Copy button, dark-mode support, Esc/click-outside to dismiss
 
+## When something is not set up yet
+
+Before each translation the extension probes `/api/tags`, so setup problems produce a
+popup you can act on instead of a raw error:
+
+| Situation | What the popup offers |
+|---|---|
+| Ollama not running | Steps to install/start it, link to `ollama.com/download`, **Retry** |
+| Ollama not answering (busy/stuck) | Timeout notice + **Retry** |
+| `403 Forbidden` | Copyable `setx OLLAMA_ORIGINS "chrome-extension://<this extension's id>"` + **Retry** |
+| URL points at a non-Ollama server | Hint to fix the URL, **Open settings** |
+| No model installed | Copyable `ollama pull gemma4:e4b` + **Retry** |
+| Selected model not installed | Copyable `ollama pull <model>` **and** a picker of the models you do have — "Use & translate" saves the choice and re-runs |
+| No model selected yet | Same picker |
+| Out of VRAM/RAM | Message + picker to switch to a smaller model |
+
+The settings page mirrors this: a failed connection renders the same fix steps with a
+copy button, keeps re-checking every 5s, and connects by itself once Ollama is up or the
+`ollama pull` finishes. A previously selected model that has been removed from the server
+is reported and replaced with an installed one.
+
+Model names are matched tolerantly, so a stored `llama3.2` resolves to an installed
+`llama3.2:latest` instead of failing.
+
 ## Setup
 
 ### 1. Allow Chrome extensions to call Ollama (one-time)
 
-Ollama rejects requests from browser extensions unless you allow their origin:
+Ollama rejects requests from browser extensions unless you allow their origin. Allow only
+this extension — `chrome-extension://*` would let every installed extension use your Ollama.
+The Web Store build has the ID `efdbloclcpmhimjmmpjfbbhfbbkhooca`; an unpacked copy gets its own
+ID (see `chrome://extensions`). The settings page shows the exact command for your install.
 
 **Windows** (then restart Ollama from the tray / `ollama serve`):
 ```powershell
-setx OLLAMA_ORIGINS "chrome-extension://*"
+setx OLLAMA_ORIGINS "chrome-extension://efdbloclcpmhimjmmpjfbbhfbbkhooca"
 ```
 
 **macOS / Linux:**
 ```bash
-export OLLAMA_ORIGINS="chrome-extension://*"   # or launchctl setenv / systemd override
+export OLLAMA_ORIGINS="chrome-extension://efdbloclcpmhimjmmpjfbbhfbbkhooca"   # or launchctl setenv / systemd override
 ```
 
 ### 2. Load the extension
@@ -67,9 +94,10 @@ way to reach non-technical users.
    (one-time $5 fee).
 2. **Bump the version** in `manifest.json` (e.g. `1.0.1`) — the store rejects re-uploads
    of the same version.
-3. **Build the package** — zip only the extension files (no `.git`, no README):
+3. **Run the tests** (`node --test`), then **build the package** — zip only the extension
+   files (no `.git`, no README, no `CLAUDE.md`, no `docs/` or `tests/`):
    ```powershell
-   Compress-Archive -Force -Path manifest.json, background.js, content.js, options.html, options.js, options.css, icons -DestinationPath llmtranslate-1.0.0.zip
+   Compress-Archive -Force -Path manifest.json, background.js, ollama.js, content.js, options.html, options.js, options.css, icons -DestinationPath llmtranslate-<version>.zip
    ```
 4. **Create the listing** in the dev console:
    - Description — mention it requires a locally running [Ollama](https://ollama.com)
